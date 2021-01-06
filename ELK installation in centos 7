@@ -1,0 +1,158 @@
+Elasticsearch: This is an open source, distributed, RESTful, JSON-based search engine. It is scalable, easy to use, and flexible
+Logstash : This is a server‑side data processing pipeline that ingests data from multiple sources simultaneously, transforms it, and then sends it to a “stash” like Elasticsearch.
+Kibana lets users visualize data with charts and graphs in Elasticsearch.
+For RHEL 8, refer to:
+
+How to Install ELK Stack on RHEL / CentOS 8
+
+Please follow our steps below to install and configure ELK stack tools on CentOS 7 / Fedora 31/30/29 Linux.
+
+
+Step 1: Install Java
+As Elasticsearch depends on Java, you need to install Java on your CentOS 7 / Fedora system.
+
+sudo yum -y install java-openjdk-devel java-openjdk
+Step 2: Add ELK repository
+Once you have Java installed, add ELK stack repository which provides ELK stack packages.
+
+For Elasticsearch 7.x
+
+cat <<EOF | sudo tee /etc/yum.repos.d/elasticsearch.repo
+[elasticsearch-7.x]
+name=Elasticsearch repository for 7.x packages
+baseurl=https://artifacts.elastic.co/packages/7.x/yum
+gpgcheck=1
+gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+enabled=1
+autorefresh=1
+type=rpm-md
+EOF
+For Elasticsearch 6.x
+
+cat <<EOF | sudo tee /etc/yum.repos.d/elasticsearch.repo
+[elasticsearch-6.x]
+name=Elasticsearch repository for 6.x packages
+baseurl=https://artifacts.elastic.co/packages/6.x/yum
+gpgcheck=1
+gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+enabled=1
+autorefresh=1
+type=rpm-md
+EOF
+After adding the repo, import GPG key:
+
+sudo rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+Clear and update your YUM package index.
+
+sudo yum clean all
+sudo yum makecache
+Step 3: Install and Configure Elasticsearch
+Elasticsearch repository is ready for use. You can install Elasticsearch using the command below:
+
+sudo yum -y install elasticsearch
+Confirm package installation.
+
+
+$ rpm -qi elasticsearch 
+ Name        : elasticsearch
+ Epoch       : 0
+ Version     : 7.0.1
+ Release     : 1
+ Architecture: x86_64
+ Install Date: Mon 06 May 2019 09:59:57 PM EAT
+ Group       : Application/Internet
+ Size        : 571521653
+ License     : Elastic License
+ Signature   : RSA/SHA512, Mon 29 Apr 2019 05:14:11 PM EAT, Key ID d27d666cd88e42b4
+ Source RPM  : elasticsearch-7.0.1-1-src.rpm
+ Build Date  : Mon 29 Apr 2019 04:06:59 PM EAT
+ Build Host  : packer-virtualbox-iso-1553723689
+ Relocations : /usr 
+ Packager    : Elasticsearch
+ Vendor      : Elasticsearch
+ URL         : https://www.elastic.co/
+ Summary     : Elasticsearch is a distributed RESTful search engine built for the cloud. Reference documentation can be found at https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html and the 'Elasticsearch: The Definitive Guide' book can be found at https://www.elastic.co/guide/en/elasticsearch/guide/current/index.html
+ Description :
+ Elasticsearch subproject :distribution:packages
+You can set JVM options like memory limits by editing the file: /etc/elasticsearch/jvm.options
+
+Example below sets initial/maximum size of total heap space
+
+-Xms1g
+-Xmx1g
+If your system has less memory, you can configure it to use small megabytes of ram.
+
+-Xms256m
+-Xmx512m
+Start and enable elasticsearch service on boot:
+
+$ sudo systemctl enable --now elasticsearch.service 
+ Synchronizing state of elasticsearch.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+ Executing: /usr/lib/systemd/systemd-sysv-install enable elasticsearch
+ Created symlink /etc/systemd/system/multi-user.target.wants/elasticsearch.service → /usr/lib/systemd/system/elasticsearch.service.
+
+Test to verify that it is working:
+
+$ curl http://127.0.0.1:9200 
+ {
+   "name" : "bBzN5Kg",
+   "cluster_name" : "elasticsearch",
+   "cluster_uuid" : "LKyqXXSvRvCpX9QAwKlP2Q",
+   "version" : {
+     "number" : "6.5.4",
+     "build_flavor" : "default",
+     "build_type" : "rpm",
+     "build_hash" : "d2ef93d",
+     "build_date" : "2018-12-17T21:17:40.758843Z",
+     "build_snapshot" : false,
+     "lucene_version" : "7.5.0",
+     "minimum_wire_compatibility_version" : "5.6.0",
+     "minimum_index_compatibility_version" : "5.0.0"
+   },
+   "tagline" : "You Know, for Search"
+ }
+Create a test index:
+
+$ curl -X PUT "http://127.0.0.1:9200/mytest_index"
+{"acknowledged":true,"shards_acknowledged":true,"index":"mytest_index"}
+Step 4: Install and Configure Kibana
+Download and install Kibana from the added Elasticsearch repository.
+
+sudo yum -y install kibana
+After a successful installation, configure Kibana:
+
+$ sudo vim /etc/kibana/kibana.yml
+server.host: "0.0.0.0"
+server.name: "kibana.example.com"
+elasticsearch.url: "http://localhost:9200"
+Change other settings as desired then start kibana service:
+
+sudo systemctl enable --now kibana
+
+Access http://ip-address:5601 to open Kibana Dashboard:
+
+elasticsearch kibana centos7 min
+If you have an active firewall service, allow TCP port 5601
+
+sudo firewall-cmd --add-port=5601/tcp --permanent
+sudo firewall-cmd --reload
+Step 5: Install and Configure Logstash
+The last installation is for Logstash. It will act as a centralized logs server for your client systems which runs an agent like filebeat.
+
+sudo yum -y install logstash
+Logstash custom configurations can be placed under the /etc/logstash/conf.d/directory.
+
+Check Logstash Configuration manual for more details.
+
+Step 6: Install other ELK tools – Bonus
+Other ELK tools that can be installed include:
+
+
+Filebeat: Lightweight Shipper for Logs. It helps you keep the simple things simple by offering a lightweight way to forward and centralize logs and files
+Metricbeat: Collect metrics from your systems and services. From CPU to memory, Redis to NGINX, and much more, Metricbeat is a lightweight way to send system and service statistics.
+Packetbeat: Lightweight Shipper for Network Data
+Heartbeat: Lightweight Shipper for Uptime Monitoring. It helps you monitor services for their availability with active probing
+Auditbeat: Lightweight shipper that helps you audit the activities of users and processes on your systems
+These tools can be installed with yum package manager using their respective names. The example below will install all ELK addon tools.
+
+sudo yum install filebeat auditbeat metricbeat packetbeat heartbeat-elastic
