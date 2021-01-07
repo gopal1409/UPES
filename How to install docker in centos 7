@@ -1,0 +1,55 @@
+Introduction
+Docker is a popular software package that creates and manages containers for application development.
+
+The platform creates a uniform interface so that almost any application running on it is compatible with most operating systems. Developing in Docker also speeds up applications, since it shares the kernel and other Linux resources.
+
+This is a guide on how to install Docker on CentOS 7.
+Prerequisites
+A maintained/supported version of CentOS (Docker doesn’t test or support outdated versions)
+A user account with sudo privileges
+Terminal access (Right-click desktop, click Open in Terminal)
+CentOS Extras repository – this is enabled by default, but if yours has been disabled you’ll need to re-enable it
+Software package installer yum
+Installing Docker on CentOS 7 With Yum
+Installing from Docker repositories using the yum command is the easiest and most popular method.
+
+Step 1: Update Docker Package Database
+In a terminal window, type:
+
+sudo yum check-update
+Allow the operation to complete.
+
+Step 2: Install the Dependencies
+The next step is to download the dependencies required for installing Docker.
+
+Type in the following command:
+
+sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+The –y switch indicates to the yum installer to answer “yes” to any prompts that may come up. The yum-utils switch adds the yum-config-manager. Docker uses a device mapper storage driver, and the device-mapper-persistent-data and lvm2 packages are required for it to run correctly.
+
+The command for installing Docker dependencies on CentOS 7.
+Step 3: Add the Docker Repository to CentOS
+To install the edge or test versions of Docker, you need to add the Docker CE stable repository to your system. To do so, run the command:
+
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+A command for adding the Docker CE stable repository to CentOS 7.
+A stable release is tested more thoroughly and has a slower update cycle. On the other hand, Edge release updates are more frequent but aren’t subject to as many stability tests.
+
+Note: If you’re only going to use the stable release, don’t enable these extra repositories. The Docker installation process defaults to the latest version of Docker unless you specify otherwise. Leaving the stable repository enabled makes sure that you aren’t accidentally updating from a stable release to an edge release.
+
+Step 4: Install Docker On CentOS Using Yum
+With everything set, you can finally move on to installing Docker on CentOS 7 by running:
+
+sudo yum install docker
+The system should begin the installation. Once it finishes, it will notify you the installation is complete and which version of Docker is now running on your system.
+
+Output confirming Docker has been installed on your CentOS 7.
+Your operating system may ask you to accept the GPG key. This is like a digital fingerprint, so you know whether to trust the installation.
+
+The fingerprint should match the following format:
+
+060A 61C5 1B55 8A7F 742B 77AA C52F EB6B 621E 9F35
+
+Step 5. Finally we need to start docker service and make it enable
+service docker start
+chkconfig docker on
