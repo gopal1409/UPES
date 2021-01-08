@@ -1,0 +1,124 @@
+Homehygieia-collectors
+Step by Step installation and configuration of latest version Hygieia Collectors - Part 2
+Prabhu Raja SinghOctober 14, 20190 Comments
+Facebook
+Twitter
+
+
+In previous blog, I have written what is Hygieia Collectors and how to deploy Hygieia Jenkins Build collector.In this blog I will cover Hygieia Cucumber collector deployment (it is little complicated one at first time for me, after few weeks of struggle finally completed the setup).
+
+Hygieia Cucumber Collector :
+
+Requirement :
+
+OS : centos 7.6
+
+Hygieia Dashboard version : v3.1.0
+
+
+1.Create collectors directory,clone the collector repo and build it,
+
+#cd /opt/hygieia
+
+#mkdir collectors
+
+#cd collectors
+
+#git clone https://github.com/Hygieia/hygieia-jenkins-cucumber-collector.git
+
+#cd hygieia-jenkins-cucumber-collector
+
+#mvn install
+
+2.After successful maven build, go to target directory and you can see  jenkins-cucumber-test-collector.jar will be generated.
+
+3.Create properties file in same target directory with the required details,
+
+#vi cucumber.properties
+
+# Database Name
+dbname=dashboarddb
+
+# Database HostName - default is localhost
+dbhost=localhost
+
+# Database Port - default is 27017
+dbport=27017
+
+# MongoDB replicaset
+dbreplicaset=false
+#dbhostport=[host1:port1,host2:port2,host3:port3]
+
+# Database Username - default is blank
+dbusername=dashboarduser
+
+# Database Password - default is blank
+dbpassword=dbpassword
+
+#Collector schedule (required)
+jenkins-cucumber.cron=0/5 * * * * *
+
+#Jenkins server (required) - Can provide multiple
+jenkins-cucumber.servers[0]=http://192.168.56.133:8080
+
+#Pattern to find cucumber reports file name
+jenkins-cucumber.cucumberJsonRegex=cucumber.json
+#jenkins-cucumber.cucumberJsonRegex=/var/lib/jenkins/workspace/Cucumber1/cucumber.json
+#jenkins-cucumber.cucumberJsonRegex=
+
+#Another option: If using same username/password Jenkins auth - set username/apiKey to use HTTP Basic Auth (blank=no auth)
+#Jenkins Username 
+jenkins-cucumber.username=xxxxx
+#Jenkins Password
+jenkins-cucumber.apiKey=yyyyy
+
+save and close the file.
+
+Here am using the same mongo db credentials which I have used in Hygieia dashboard api properties.Then update the cucumber details.
+
+4.In Jenkins Server, Create a Job with with following settings,
+
+In Post-build actions - Archive the artifacts and cucumber reports should be enabled.
+Cucumber report file has to be generated under workspace root directory of the job after the successful maven build
+Verify the cucumber report is generated successfully form Jenkins dashboard
+Make sure the artifact file is generated after successful job completion for the Job
+
+
+5.Deploy the Hygieia Cucumber jar file,
+
+Go to,
+
+#cd /opt/hygieia/collectors/hygieia-jenkins-cucumber-collector/target
+
+Run the jar file,
+
+#java -jar jenkins-cucumber-test-collector.jar --spring.config.name=cucumber --spring.config.location=/opt/hygieia/collectors/hygieia-jenkins-cucumber-collector/cucumber.properties  -Djasypt.encryptor.password=hygieiasecret
+
+Once its ran successfully, you will get output like below,
+
+
+
+6.Hygieia dashboard - cucumber collector configuration,
+
+Now go to Hygieia dashboard, choose Code Analysis widget and configure it.
+
+For cucumber, in Fuctional test part your successful Job name will show there select it and click save.
+
+
+
+
+Wait for few minutes, finally you can see the cucumber status in Code Analysis Widget like below,
+
+
+
+
+Now, We have configured Hygieia Cucumber collector successfully.
+
+
+Troubleshooting,
+
+Error 1 :
+
+Error message : "WARNING: No Enabled Jobs found with artifacts pattern: cucumber.json"
+
+If you are getting this error, might be missed one of the above steps, Make sure you have followed the above steps correctly.
