@@ -1,0 +1,270 @@
+
+Hygieia is an Opensource project, it simplify the ability to view of delivery pipelines. Hygieia's dashboard gives an overview for DevOps engineers and executives to monitor the health of code commit to deployment in all environments.
+
+Below is the architecture diagram for Hygieia Dashboard,
+
+
+
+In this blog we are going to install latest version(3.1.0) of Hygieia Dashboard in CentOS 7.
+
+Requirements:
+
+OS : centOS 7.6
+Java : 1.8
+Node : 10.x
+Maven : 3.5.x
+NPM : 6.9.x
+Bower : 1.8.8
+Gulp : 2.2.0
+MongoDB : 4.0.12
+
+Step 1:
+
+Java 1.8 Installation,
+
+#yum install java-devel java -y
+
+#java -version
+
+
+
+Step 2:
+
+NodeJS 10.x Installation,
+
+#yum install gcc-c++ make -y
+
+#curl -sL https://rpm.nodesource.com/setup_10.x | sudo -E bash -
+
+#yum install nodejs -y
+
+Check the NodeJS and NPM Version,
+
+#node -v
+#npm -v
+
+
+
+Step 3:
+
+Maven 3.5.4 Installation,
+
+Go to opt directory,
+
+#cd /opt
+
+Download the maven tar file.
+
+#wget http://www-us.apache.org/dist/maven/maven-3/3.5.4/binaries/apache-maven-3.5.4-bin.tar.gz
+
+Install wget if you do not have in the server. (yum install wget -y)
+
+#tar -xf apache-maven-3.5.4-bin.tar.gz
+
+#mv apache-maven-3.5.4 maven
+
+Create maven.sh file in below location,
+
+#vi /etc/profile.d/maven.sh
+
+##Apache Maven Environment Variables
+export M2_HOME=/opt/maven
+export PATH=${M2_HOME}/bin:${PATH}
+
+Save and close it.
+
+Make maven.sh executable and load the configuration,
+
+#chmod +x /etc/profile.d/maven.sh
+#source /etc/profile.d/maven.sh
+
+Check Maven version,
+
+#mvn --version
+
+
+
+Step 4:
+
+MongoDB installation:
+
+Add this repo file to install latest MongoDB version.
+
+#vi /etc/yum.repos.d/mongodb-org.repo
+
+[mongodb-org-4.0]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/4.0/x86_64/
+gpgcheck=1
+enabled=1
+gpgkey=https://www.mongodb.org/static/pgp/server-4.0.asc
+
+Save and exit.
+
+Install MongoDB now,
+
+#yum install mongodb-org -y
+
+Once installation is completed, start the service.
+
+#systemctl start mongod
+
+Verifying MongoDB Installation,
+
+Login to MongoDB,
+
+#mongo
+
+>db.version()
+
+The output will look like below,
+
+4.0.12
+
+Create database in mongodb and create an user to access the database,
+
+Login to MongoDB,
+
+#mongo
+
+>use dashboarddb
+
+>db.createUser(
+                 {
+                   user: "dashboarduser",
+                   pwd: "dbpassword",
+                   roles: [
+                      {role: "readWrite", db: "dashboard"}
+                           ]
+                   })
+
+>exit
+
+Here we have created a database name as "dashboarddb" , MongoDB username as "dashboarduser" and password is "dbpassword"
+
+Step 5:
+
+Install bower and gulp:
+
+#npm install bower -g
+
+#npm install gulp -g
+
+
+
+Step 6:
+
+Hygieia Installation:
+
+In latest version of Hygieia-3.1.0 all components are moved as separate github repositories, so we need to download all the repository one by one,
+
+Download following git repository,
+
+#cd /opt
+
+#git clone https://github.com/Hygieia/api.git
+#git clone https://github.com/Hygieia/hygieia-core.git
+#git clone https://github.com/Hygieia/Hygieia.git
+
+Build the Hygieia one by one,
+
+#cd hygieia-core
+
+#mvn clean install package
+
+
+
+It will take some time to download the required packages and once the build is completed, Make sure the build status is success.
+
+Now go to Hygieia location and build it,
+
+#cd Hygieia
+
+#mvn clean install package
+
+Make sure the build status is success.
+
+
+
+
+Now go to Hygieia location and build it,
+
+#cd api
+
+#mvn clean install package
+
+
+
+Make sure the build status is success.
+
+Here api.jar file will be created under target directory.
+
+Note : All build status should be success.
+
+Step 7 :
+
+Create api properties file and start API server,
+
+#cd api
+
+#vi dashboard.properties
+
+dbname=dashboarddb
+dbusername=dashboarduser
+dbpassword=dbpassword
+dbhost=localhost
+dbport=27017
+dbreplicaset=false
+server.port=8080
+server.contextPath=/api
+logRequest=false
+logSplunkRequest=false
+corsEnabled=false
+version.number=0.0.1
+pageSize=10
+
+Save and close it.
+
+Now start the API server below command,
+
+#cd /opt
+
+#java -jar /opt/api/target/api.jar --spring.config.name=dashboard --spring.config.location=/opt/api/dashboard.properties -Djasypt.encryptor.password=hygieiasecret
+
+Note : A service will run in port 8080, check it by, #netstat -tulnp
+
+
+
+Step 8:
+
+To access Hygieia web interface, We need to run gulp.
+
+Go to UI directory,
+
+#cd /opt/Hygieia/UI
+
+#gulp serve
+
+Wait for few mins until its complete and get the port number 3000.
+
+
+
+
+
+Step 9:
+
+Access Hygieia web interface from browser,
+
+URL : http://hygieia-server-IP:3000
+
+Allow port 3000 in firewall to access from outside.
+
+
+
+Click the power icon next to Login then sign up with new credentials and login to Hygieia.
+
+
+
+Thats it, Latest version Hygieia installation has been completed successfully.
+
+In next blog I will create how to work with Hygieia collectors and integrate with Hygieia API and below the links.
